@@ -21,8 +21,10 @@ script:
       set -Eeuo pipefail
       set -x
       docker build -t "$image" .
+      docker push "$image"
       ~/official-images/test/run.sh "$image"
       docker build -t "$image-passenger" passenger
+      docker push "$image-passenger"
       ~/official-images/test/run.sh "$image-passenger"
     )
 
