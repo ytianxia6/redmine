@@ -28,5 +28,7 @@ script:
 
 after_script:
   - docker images
+  - docker push ytianxia6/redmine-ruby2.5
+
 
 # vim:set et ts=2 sw=2:
