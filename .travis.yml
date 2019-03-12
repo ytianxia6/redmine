@@ -13,7 +13,7 @@ before_script:
   - env | sort
   - wget -qO- 'https://github.com/tianon/pgp-happy-eyeballs/raw/master/hack-my-builds.sh' | bash
   - cd "$VERSION"
-  - image="/$(awk '$1 == "FROM" { print $2; exit }' passenger/Dockerfile)"
+  - image="$(awk '$1 == "FROM" { print $2; exit }' passenger/Dockerfile)"
 
 script:
   - |
