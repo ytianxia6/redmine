@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 # see https://www.redmine.org/projects/redmine/wiki/redmineinstall
-defaultRubyVersion='2.5'
+defaultRubyVersion='2.4'
 declare -A rubyVersions=(
 	[3.3]='2.3'
 	[3.4]='2.4'
@@ -37,7 +37,7 @@ for version in "${versions[@]}"; do
 		Dockerfile.template > "$version/Dockerfile"
 
 	mkdir -p "$version/passenger"
-	sed -e 's/%%REDMINE%%/redmine-ruby2.5:'"$version"'/' \
+	sed -e 's/%%REDMINE%%/redmine:'"$version-ruby2.4"'/' \
 		-e 's/%%PASSENGER_VERSION%%/'"$passenger"'/' \
 		Dockerfile-passenger.template > "$version/passenger/Dockerfile"
 
