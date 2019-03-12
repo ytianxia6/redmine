@@ -1,4 +1,4 @@
-FROM redmine:3.4
+FROM ytianxia6/redmine-ruby2.5:3.4
 
 ENV PASSENGER_VERSION 6.0.2
 
