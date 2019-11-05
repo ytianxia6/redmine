@@ -21,6 +21,7 @@ script:
     (
       set -Eeuo pipefail
       set -x
+      docker login --username=$DOCKER_USERNAME -p $DOCKER_PASSWORD
       docker build -t "$image-ruby2.4" .
       docker push "$image-ruby2.4"
       ~/official-images/test/run.sh "$image-ruby2.4"
