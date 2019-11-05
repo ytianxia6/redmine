@@ -4,7 +4,7 @@ set -Eeuo pipefail
 # see https://www.redmine.org/projects/redmine/wiki/redmineinstall
 defaultRubyVersion='2.4'
 declare -A rubyVersions=(
-	[3.4]='2.4'
+#	[3.4]='2.4'
 )
 
 cd "$(dirname "$(readlink -f "$BASH_SOURCE")")"
@@ -14,6 +14,8 @@ if [ ${#versions[@]} -eq 0 ]; then
 	versions=( */ )
 fi
 versions=( "${versions[@]%/}" )
+
+echo versions= ${versions}
 
 relasesUrl='https://www.redmine.org/releases'
 versionsPage="$(wget -qO- "$relasesUrl")"

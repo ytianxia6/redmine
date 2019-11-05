@@ -1,4 +1,4 @@
-FROM ruby:2.4-slim-stretch
+FROM ruby:2.4-slim-buster
 
 # explicitly set uid/gid to guarantee that it won't change in the future
 # the values 999:999 are identical to the current user/group id assigned
@@ -40,7 +40,7 @@ RUN set -eux; \
 	wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch"; \
 	wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc"; \
 	export GNUPGHOME="$(mktemp -d)"; \
-	gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4; \
+	gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4; \
 	gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu; \
 	gpgconf --kill all; \
 	rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc; \
@@ -77,27 +77,28 @@ RUN set -eux; \
 	chown redmine:redmine "$HOME"; \
 	chmod 1777 "$HOME"
 
-ENV REDMINE_VERSION 4.0.2
-ENV REDMINE_DOWNLOAD_MD5 3e6085e90f7a8c8f1f5c49c79494c988
+ENV REDMINE_VERSION 4.0.5
+ENV REDMINE_DOWNLOAD_MD5 d25649272a9c347e4368cdd50e039e86
 
-RUN wget -O redmine.tar.gz "https://www.redmine.org/releases/redmine-${REDMINE_VERSION}.tar.gz" \
-	&& echo "$REDMINE_DOWNLOAD_MD5 redmine.tar.gz" | md5sum -c - \
-	&& tar -xvf redmine.tar.gz --strip-components=1 \
-	&& rm redmine.tar.gz files/delete.me log/delete.me \
-	&& mkdir -p log public/plugin_assets sqlite tmp/pdf tmp/pids \
-	&& chown -R redmine:redmine ./ \
+RUN set -eux; \
+	wget -O redmine.tar.gz "https://www.redmine.org/releases/redmine-${REDMINE_VERSION}.tar.gz"; \
+	echo "$REDMINE_DOWNLOAD_MD5 *redmine.tar.gz" | md5sum -c -; \
+	tar -xf redmine.tar.gz --strip-components=1; \
+	rm redmine.tar.gz files/delete.me log/delete.me; \
+	mkdir -p log public/plugin_assets sqlite tmp/pdf tmp/pids; \
+	chown -R redmine:redmine ./; \
 # log to STDOUT (https://github.com/docker-library/redmine/issues/108)
-	&& echo 'config.logger = Logger.new(STDOUT)' > config/additional_environment.rb \
+	echo 'config.logger = Logger.new(STDOUT)' > config/additional_environment.rb; \
 # fix permissions for running as an arbitrary user
-	&& chmod -R ugo=rwX config db sqlite \
-	&& find log tmp -type d -exec chmod 1777 '{}' +
+	chmod -R ugo=rwX config db sqlite; \
+	find log tmp -type d -exec chmod 1777 '{}' +
 
 RUN set -eux; \
 	\
 	savedAptMark="$(apt-mark showmanual)"; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
-		dpkg-dev \
+		freetds-dev \
 		gcc \
 		libmagickcore-dev \
 		libmagickwand-dev \
@@ -106,32 +107,14 @@ RUN set -eux; \
 		libsqlite3-dev \
 		make \
 		patch \
-		\
-# tiny_tds 1.0.x requires OpenSSL 1.0
-# see https://github.com/rails-sqlserver/tiny_tds/commit/3269dd3bcfbe4201ab51aa2870a6aaddfcbdfa5d (tiny_tds 1.2.x+ is required for OpenSSL 1.1 support)
-		libssl1.0-dev \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
 	\
-# https://github.com/travis-ci/travis-ci/issues/9391 (can't let "tiny_tds" download FreeTDS for us because FTP)
-# https://github.com/rails-sqlserver/tiny_tds/pull/384 (newer version uses HTTP!)
-# https://github.com/rails-sqlserver/tiny_tds/pull/345 (... but then can't download it for us)
-# http://www.freetds.org/files/stable/?C=M;O=D
-# (if/when we update to Debian Buster and thus get FreeTDS newer than 0.95 in the distro, we can switch back to simply installing "freetds-dev" from Debian)
-	wget -O freetds.tar.bz2 'http://www.freetds.org/files/stable/freetds-1.00.91.tar.bz2'; \
-	echo '8d71f9f29be0fe0637e443dd3807b3fd *freetds.tar.bz2' | md5sum -c -; \
-	mkdir freetds; \
-	tar -xf freetds.tar.bz2 -C freetds --strip-components=1; \
-	rm freetds.tar.bz2; \
-	( cd freetds && gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" && ./configure --build="$gnuArch" --enable-silent-rules && make -j "$(nproc)" && make -C src install && make -C include install ); \
-	rm -rf freetds; \
-	gosu redmine bundle config build.tiny_tds --enable-system-freetds; \
-	\
-	gosu redmine bundle install --without development test; \
+	gosu redmine bundle install --jobs "$(nproc)" --without development test; \
 	for adapter in mysql2 postgresql sqlserver sqlite3; do \
 		echo "$RAILS_ENV:" > ./config/database.yml; \
 		echo "  adapter: $adapter" >> ./config/database.yml; \
-		gosu redmine bundle install --without development test; \
+		gosu redmine bundle install --jobs "$(nproc)" --without development test; \
 		cp Gemfile.lock "Gemfile.lock.${adapter}"; \
 	done; \
 	rm ./config/database.yml; \
