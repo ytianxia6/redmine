@@ -21,11 +21,13 @@ script:
     (
       set -Eeuo pipefail
       set -x
-      docker build -t "$image" .
-      ~/official-images/test/run.sh "$image"
+      docker build -t "$image-ruby2.4" .
+      docker push "$image-ruby2.4"
+      ~/official-images/test/run.sh "$image-ruby2.4"
       if [ -d passenger ]; then
-      docker build -t "$image-passenger" passenger
-      ~/official-images/test/run.sh "$image-passenger"
+      docker build -t "$image-ruby2.4-passenger" passenger
+      docker push "$image-ruby2.4-passenger"
+      ~/official-images/test/run.sh "$image-ruby2.4-passenger"
       fi
     )
 
