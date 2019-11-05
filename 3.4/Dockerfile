@@ -1,4 +1,4 @@
-FROM ruby:2.6-slim-buster
+FROM ruby:2.4-slim-buster
 
 # explicitly set uid/gid to guarantee that it won't change in the future
 # the values 999:999 are identical to the current user/group id assigned
@@ -77,8 +77,8 @@ RUN set -eux; \
 	chown redmine:redmine "$HOME"; \
 	chmod 1777 "$HOME"
 
-ENV REDMINE_VERSION 4.0.5
-ENV REDMINE_DOWNLOAD_MD5 d25649272a9c347e4368cdd50e039e86
+ENV REDMINE_VERSION 3.4.12
+ENV REDMINE_DOWNLOAD_MD5 5bd9285fac30a93c2c477dfc663ea933
 
 RUN set -eux; \
 	wget -O redmine.tar.gz "https://www.redmine.org/releases/redmine-${REDMINE_VERSION}.tar.gz"; \

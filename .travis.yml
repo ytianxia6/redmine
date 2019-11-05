@@ -3,6 +3,9 @@ services: docker
 
 env:
   - VERSION=4.0
+  - VERSION=4.0/alpine
+  - VERSION=3.4
+  - VERSION=3.4/alpine
 
 install:
   - git clone https://github.com/docker-library/official-images.git ~/official-images
@@ -11,24 +14,22 @@ before_script:
   - env | sort
   - wget -qO- 'https://github.com/tianon/pgp-happy-eyeballs/raw/master/hack-my-builds.sh' | bash
   - cd "$VERSION"
-  - image="$(awk '$1 == "FROM" { print $2; exit }' passenger/Dockerfile)"
+  - image="redmine:${VERSION//\//-}"
 
 script:
   - |
     (
       set -Eeuo pipefail
       set -x
-      docker login --username=$DOCKER_USERNAME -p $DOCKER_PASSWORD
       docker build -t "$image" .
-      docker push "$image"
       ~/official-images/test/run.sh "$image"
+      if [ -d passenger ]; then
       docker build -t "$image-passenger" passenger
-      docker push "$image-passenger"
       ~/official-images/test/run.sh "$image-passenger"
+      fi
     )
 
 after_script:
   - docker images
-
 
 # vim:set et ts=2 sw=2:
