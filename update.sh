@@ -38,7 +38,7 @@ for version in "${versions[@]}"; do
 		Dockerfile-debian.template > "$version/Dockerfile"
 
 	mkdir -p "$version/passenger"
-	sed -e 's/%%REDMINE%%/ytianxia6\/redmine:'"$version-ruby$rubyVersion"'/' \
+	sed -e 's/%%REDMINE%%/redmine:'"$version"'/' \
 		-e 's/%%PASSENGER_VERSION%%/'"$passenger"'/' \
 		Dockerfile-passenger.template > "$version/passenger/Dockerfile"
 
